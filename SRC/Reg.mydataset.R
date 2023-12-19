@@ -10,11 +10,12 @@ default_dataset <- read.csv("C:\\Users\\capat\\Desktop\\Univer\\AD\\CapațînaCr
 
 dataset <- default_dataset
 
-dataset$Attrition_Flag <- case_when(
-  dataset$Attrition_Flag %in% "Existing Customer" ~ "yes",
-  dataset$Attrition_Flag == "Attrited Customer" ~ "no",
+dataset$Gender <- case_when(
+  dataset$Gender %in% "M" ~ "yes",
+  dataset$Gender == "F" ~ "no",
   TRUE ~ "no"
 )
+
 #Partea 1
 set.seed(123)
 split <- initial_split(dataset, prop = 0.7, strata = 'Months_Inactive_12_mon')
@@ -135,14 +136,14 @@ vip(cv_model3, num_features = 10)
 # Logistic Regression
 
 
-churn_split <- initial_split(dataset, prop = .7, strata = 'Attrition_Flag')
+churn_split <- initial_split(dataset, prop = .7, strata = 'Gender')
 churn_train <- training(churn_split)
 churn_test <- testing(churn_split)
 
-churn_train$Attrition_Flag <- factor(churn_train$Attrition_Flag, levels = c("no", "yes"))
+churn_train$Gender <- factor(churn_train$Gender, levels = c("no", "yes"))
 
-model1 <- glm(Attrition_Flag ~ Months_Inactive_12_mon, family = 'binomial', data = churn_train)
-model2 <- glm(Attrition_Flag ~ Total_Revolving_Bal, family = 'binomial', data = churn_train)
+model1 <- glm(Gender ~ Months_Inactive_12_mon, family = 'binomial', data = churn_train)
+model2 <- glm(Gender ~ Total_Revolving_Bal, family = 'binomial', data = churn_train)
 
 tidy(model1)
 tidy(model2)
@@ -152,14 +153,14 @@ exp(coef(model2))
 
 
 model3 <- glm(
-  Attrition_Flag ~ Months_Inactive_12_mon + Total_Revolving_Bal, family = 'binomial',
+  Gender ~ Months_Inactive_12_mon + Total_Revolving_Bal, family = 'binomial',
   data = churn_train
 )
 tidy(model3)
 
 set.seed(123)
 cv_model1 <- train(
-  Attrition_Flag ~ Months_Inactive_12_mon,
+  Gender ~ Months_Inactive_12_mon,
   data = churn_train,
   method = 'glm',
   family = 'binomial',
@@ -168,7 +169,7 @@ cv_model1 <- train(
 
 set.seed(123) 
 cv_model2 <- train(
-  Attrition_Flag ~ Months_Inactive_12_mon + Total_Revolving_Bal, 
+  Gender ~ Months_Inactive_12_mon + Total_Revolving_Bal, 
   data = churn_train,
   method = 'glm',
   family = 'binomial',
@@ -177,7 +178,7 @@ cv_model2 <- train(
 
 set.seed(123) 
 cv_model3 <- train(
-  Attrition_Flag ~ .,
+  Gender ~ .,
   data = churn_train,
   method = 'glm',
   family = 'binomial',
@@ -197,20 +198,20 @@ levels(pred_class)
 
 confusionMatrix(
   data = relevel(pred_class, ref = 'yes'),
-  reference = relevel(churn_train$Attrition_Flag, ref = 'yes')
+  reference = relevel(churn_train$Gender, ref = 'yes')
 )
 
-levels(churn_train$Attrition_Flag)
+levels(churn_train$Gender)
 
 library(ROCR)
 
 m1_prob <- predict(cv_model1, churn_train, type = 'prob')$yes
 m3_prob <- predict(cv_model3, churn_train, type = 'prob')$yes
 
-perf1 <- prediction(m1_prob, churn_train$Attrition_Flag) %>% 
+perf1 <- prediction(m1_prob, churn_train$Gender) %>% 
   performance(measure = 'tpr', x.measure = 'fpr')
 
-perf2 <- prediction(m3_prob, churn_train$Attrition_Flag) %>% 
+perf2 <- prediction(m3_prob, churn_train$Gender) %>% 
   performance(measure = 'tpr', x.measure = 'fpr')
 
 
